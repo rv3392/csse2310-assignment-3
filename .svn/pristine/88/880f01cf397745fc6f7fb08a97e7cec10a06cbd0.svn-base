@@ -1,0 +1,34 @@
+#ifndef DEALER_2310_H
+#define DEALER_2310_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <signal.h>
+
+#include "player.h"
+#include "path.h"
+#include "deck.h"
+
+typedef struct Dealer Dealer;
+typedef struct Instance Instance;
+
+struct Dealer {
+    int playerCount;
+    Instance** players;
+    Path* path;
+    Deck* deck;
+};
+
+struct Instance {
+    int pid;
+    int writePipeFD;
+    int readPipeFD;
+    FILE* readPipe;
+    FILE* writePipe;
+    Player* player;
+};
+
+#endif

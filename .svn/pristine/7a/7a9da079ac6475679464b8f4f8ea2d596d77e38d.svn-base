@@ -1,0 +1,18 @@
+#include "playerStack.h"
+
+PlayerStack* create_player_stack(int size) {
+    PlayerStack* players = malloc(sizeof(PlayerStack));
+    players->players = malloc(sizeof(int) * size);
+    players->top = -1;
+    players->size = size;
+
+    return players;
+}
+
+int pop_from_player_stack(PlayerStack* players) {
+    return players->players[players->top--];
+}
+
+void push_to_player_stack(PlayerStack* players, player_in_stack player) {
+    players->players[++players->top] = player;
+}

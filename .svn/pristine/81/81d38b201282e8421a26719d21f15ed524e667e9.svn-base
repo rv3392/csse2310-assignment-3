@@ -1,0 +1,17 @@
+#ifndef SITE_H
+#define SITE_H
+
+#include "playerStack.h"
+
+typedef struct Site Site;
+
+struct Site {
+    char* type;
+    int playerLimit;
+    PlayerStack* playersOnSite;
+};
+
+int get_num_players_on_site(Site* site);
+bool is_site_free(Site* site);
+
+#endif

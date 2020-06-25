@@ -1,0 +1,25 @@
+#ifndef DECK_H
+#define DECK_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#include "messageUtils.h"
+
+#define DECK_STARTING_POSITION 0
+
+typedef struct Deck Deck;
+typedef char Card;
+
+struct Deck {
+    Card* cards;
+    int numCards;
+    int currentPosition;
+};
+
+Deck* read_deck(FILE* from);
+Card get_next_card(Deck* deck);
+
+#endif

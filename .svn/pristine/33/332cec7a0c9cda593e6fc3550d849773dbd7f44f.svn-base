@@ -1,0 +1,173 @@
+#include "2310dealer.h"
+
+int childCount;
+int* childPids;
+
+Deck* get_parsed_deck(int argc, char** argv) {
+    FILE* deckFile = fopen(argv[1], "r");
+    if (deckFile == NULL) {
+        fprintf(stderr, "Error reading deck\n");
+        exit(2);
+    }
+    //TODO: Add check for \n at end of these files
+    Deck* deck = read_deck(deckFile);
+    fclose(deckFile);
+    return deck;
+}
+
+Path* get_parsed_path(int argc, char** argv) {
+    FILE* pathFile = fopen(argv[2], "r");
+    if (pathFile == NULL) {
+        fprintf(stderr, "Error reading path\n");
+        exit(3);
+    }
+
+    Path* path = malloc(sizeof(Path));
+    int error = read_path(pathFile, argc - 3, path);
+    if (error > 0) {
+        fprintf(stderr, "Error reading path\n");
+        exit(3);
+    }
+    fclose(pathFile);
+    return path;
+}
+
+char* get_unparsed_path(int argc, char** argv) {
+    FILE* pathFile = fopen(argv[2], "r");
+    size_t* unparsedPathSize = malloc(sizeof(size_t));
+    *unparsedPathSize = 20;
+    char* unparsedPath = malloc(*unparsedPathSize);
+    get_line(&unparsedPath, unparsedPathSize, pathFile);
+    fclose(pathFile);
+
+    return unparsedPath;
+}
+
+bool is_game_over(Dealer* dealer) {
+    for (int playerNum = 0; playerNum < dealer->playerCount; playerNum++) {
+        Player* player = dealer->players[playerNum]->player;
+        if (dealer->path->numSites - 1 != player->site) {
+            return false;
+        }
+    }
+    return true;
+}
+
+int get_next_player_id(Path* path) {
+    for (int siteNum = 0; siteNum < path->numSites; siteNum++) {
+        if (get_num_players_on_site(path->sites[siteNum]) > 0) {
+            return pop_from_player_stack(path->sites[siteNum]->playersOnSite);
+        }
+    }
+
+    return 0;
+}
+
+int parse_move_buffer(char* moveBuffer) {
+    int move = -1;
+    int argumentsRead = sscanf(moveBuffer, "DO%d", &move);
+
+    if (argumentsRead != 1 || move == -1) {
+        fprintf(stderr, "Communications error\n");
+        exit(5);
+    }
+
+    return move;
+}
+
+Dealer* create_dealer(int argc, char** argv) {
+    if (argc < 4) {
+        fprintf(stderr, "Usage: 2310dealer deck path p1 {p2}\n");
+        exit(1);
+    }
+
+    Deck* deck = get_parsed_deck(argc, argv);
+    Path* path = get_parsed_path(argc, argv);
+
+    char* unparsedPath = get_unparsed_path(argc, argv);
+    int playerCount = argc - 3;
+    char** playerProcessNames = malloc(sizeof(char*) * playerCount);
+    for (int p = 0; p < playerCount; p++) {
+        playerProcessNames[p] = argv[p + 3];
+    }
+
+    Instance** players = start_players(playerCount, playerProcessNames, 
+            unparsedPath);
+
+    Dealer* dealer = calloc(1, sizeof(Dealer));
+    dealer->playerCount = playerCount;
+    dealer->players = players;
+    dealer->path = path;
+    dealer->deck = deck;
+
+    return dealer;
+}
+
+void loop_dealer(Dealer* dealer) {
+    print_path(stdout, dealer->path);
+    while(true) {
+        int playerId = get_next_player_id(dealer->path);
+        Instance* turnPlayer = dealer->players[playerId];
+        send_message(turnPlayer->writePipe, "YT\n");
+
+        char* moveBuffer = malloc(sizeof(char*) * 4);
+        read_message(turnPlayer->readPipe, moveBuffer);
+        int move = parse_move_buffer(moveBuffer);
+        Effect* playerMove = move_player(playerId, move, dealer);
+
+        char* hapMessage = create_hap_message(playerId, playerMove);
+        send_message_to_all(hapMessage, dealer);
+        print_player_summary(stdout, turnPlayer->player);
+
+        print_path(stdout, dealer->path);
+        if(is_game_over(dealer)) {
+            send_message_to_all("DONE", dealer);
+            print_all_scores(dealer->players, dealer->playerCount);
+            exit(0);
+        }
+    }
+}
+
+void kill_all_players() {
+    for (int c = 0; c < childCount; c++) {
+        kill(childPids[c], SIGKILL);
+    }
+}
+
+void sigchld_handler() {
+    kill_all_players();
+    wait(NULL);
+    write(2, "Error starting process\n", 23);
+    _exit(4);
+}
+
+void sighup_handler() {
+    kill_all_players();
+    wait(NULL);
+    _exit(7);
+}
+
+void set_child_pids(Dealer* dealer) {
+    childCount = dealer->playerCount;
+    childPids = malloc(sizeof(int) * dealer->playerCount);
+    for (int p = 0; p < childCount; p++) {
+        childPids[p] = dealer->players[p]->pid;
+    }
+}
+
+void setup_handlers() {
+    struct sigaction sigchldAction;
+    sigchldAction.sa_handler = sigchld_handler;
+    sigaction(SIGCHLD, &sigchldAction, 0);
+
+    struct sigaction sighupAction;
+    sighupAction.sa_handler = sighup_handler;
+    sigaction(SIGHUP, &sighupAction, 0);
+}
+
+int main(int argc, char** argv) {
+    setup_handlers();
+    Dealer* dealer = create_dealer(argc, argv);
+    set_child_pids(dealer);
+    loop_dealer(dealer);
+}

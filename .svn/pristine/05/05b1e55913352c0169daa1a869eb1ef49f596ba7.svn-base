@@ -1,0 +1,14 @@
+#ifndef UTILS_H
+#define UTILS_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+#define HAP_MESSAGE_LENGTH 12
+
+bool get_line(char** buffer, size_t* capacity, FILE* from);
+bool read_message(FILE* from, char* messageBuffer);
+void send_message(FILE* to, char* message);
+
+#endif

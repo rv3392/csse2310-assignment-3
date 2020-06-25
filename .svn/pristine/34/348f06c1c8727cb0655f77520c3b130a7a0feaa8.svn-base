@@ -1,0 +1,45 @@
+#include "deck.h"
+
+Deck* read_deck(FILE* from) {
+    Deck* deck = malloc(sizeof(Deck));
+    char* unparsedDeck = malloc(sizeof(char) * 1);
+    size_t* deckSize = malloc(sizeof(size_t));
+    *deckSize = 20;
+
+    if(!get_line(&unparsedDeck, deckSize, from)) {
+        fprintf(stderr, "Error reading deck\n");
+        exit(2);
+    }
+
+    deck->numCards = strtol(unparsedDeck, &unparsedDeck, 10);
+    if (deck->numCards == 0) {
+        fprintf(stderr, "Error reading deck\n");
+        exit(2);
+    }
+
+    deck->cards = malloc(sizeof(char) * deck->numCards);
+    for (int card = 0; card < deck->numCards; card++) {
+        if (unparsedDeck[card] < 'A' || unparsedDeck[card] > 'E') {
+            fprintf(stderr, "Error reading deck\n");
+            exit(2);
+        }
+        deck->cards[card] = (Card) unparsedDeck[card];
+    }
+
+    deck->currentPosition = DECK_STARTING_POSITION;
+
+    return deck;
+}
+
+Card get_next_card(Deck* deck) {
+    Card returnCard;
+    if (deck->currentPosition < deck->numCards - 1) {
+        returnCard = deck->cards[deck->currentPosition];
+        deck->currentPosition++;
+    } else {
+        returnCard = deck->cards[deck->currentPosition];
+        deck->currentPosition = DECK_STARTING_POSITION;
+    }
+    return returnCard - '@';
+}
+

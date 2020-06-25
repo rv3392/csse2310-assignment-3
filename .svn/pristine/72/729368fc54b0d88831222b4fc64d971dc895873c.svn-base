@@ -1,0 +1,47 @@
+#ifndef DEALER_UTILS_H
+#define DEALER_UTILS_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <signal.h>
+
+#include "player.h"
+#include "path.h"
+#include "deck.h"
+
+typedef struct Instance Instance;
+typedef struct Dealer Dealer;
+
+struct Instance {
+    int pid;
+    int writePipeFD;
+    int readPipeFD;
+    FILE* readPipe;
+    FILE* writePipe;
+    Player* player;
+};
+
+struct Dealer {
+    int playerCount;
+    Instance** players;
+    Path* path;
+    Deck* deck;
+};
+
+void send_message_to_all(char* hapMessage, Dealer* dealer);
+Instance** start_players(int playerCount, char** playerExecutableNames,
+        char* unparsedPath);
+Instance* start_player(int playerId, int playerCount, 
+        char* playerExecutableFilename, char* unparsedPath);
+char** get_player_args(char* playerExecutableFilename, int playerId,
+        int playerCount);
+void initiate_player(int readPipeFD, int writePipeFD, FILE** read,
+        FILE** write, char* unparsedPath);
+void print_all_scores(Instance** players, int playerCount);
+Effect* move_player(int playerId, int move, Dealer* dealer);
+Effect* get_player_effect_from_move(int move, char* siteType, Player* player,
+        Deck* deck);
+#endif

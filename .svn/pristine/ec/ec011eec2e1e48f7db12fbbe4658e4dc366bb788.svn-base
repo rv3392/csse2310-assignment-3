@@ -1,0 +1,15 @@
+#ifndef PLAYER_INSTANCE_H
+#define PLAYER_INSTANCE_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "messageUtils.h"
+#include "path.h"
+#include "player.h"
+
+typedef int (*PlayerMove)(Path* path, int callerPlayerId, Player** players);
+void run_player(int argc, char** argv, PlayerMove move);
+
+#endif

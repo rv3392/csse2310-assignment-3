@@ -1,0 +1,29 @@
+#ifndef PATH_H
+#define PATH_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <ctype.h>
+
+#include "messageUtils.h"
+#include "playerStack.h"
+#include "site.h"
+
+typedef struct Path Path;
+
+struct Path {
+    Site** sites;
+    int numSites;
+    int* playerPositions;
+};
+
+int read_path(FILE* from, int playerCount, Path* parsedPath);
+void print_path(FILE* to, Path* path);
+
+void update_player_positions(Path* path, int id, int oldSite, int newSite);
+
+int get_next_barrier(Path* path, int playerPosition);
+
+#endif

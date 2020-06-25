@@ -1,0 +1,24 @@
+#ifndef PLAYER_STACK_H
+#define PLAYER_STACK_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+
+#include "messageUtils.h"
+
+typedef struct PlayerStack PlayerStack;
+typedef int player_in_stack; //check name
+
+struct PlayerStack {
+    player_in_stack* players;
+    int top;
+    int size;
+};
+
+PlayerStack* create_player_stack(int size);
+int pop_from_player_stack(PlayerStack* players);
+void push_to_player_stack(PlayerStack* players, player_in_stack player);
+
+#endif

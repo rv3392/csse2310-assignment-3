@@ -1,0 +1,139 @@
+#include "2310B.h"
+
+int move(Path* path, int callerPlayerId, Player** players);
+
+bool check_condition_one(Path* path, int callerPlayerId, Player** players, 
+        int* calculatedMove);
+bool check_condition_two(Path* path, Player* player, int* calculatedMove);
+bool check_condition_three(Path* path, int callerPlayerId, Player** players, 
+        int* calculatedMove);
+bool check_condition_four(Path* path, Player* player, int* calculatedMove);
+bool check_condition_five(Path* path, Player* player, int* calculatedMove);
+
+int main(int argc, char** argv) {
+    run_player(argc, argv, &move);
+}
+
+int move(Path* path, int callerPlayerId, Player** players) {
+    Player* player = players[callerPlayerId];
+    int* calculatedMove = malloc(sizeof(int));
+    if (check_condition_one(path, callerPlayerId, players, calculatedMove)) {
+        return *calculatedMove;
+    } else if (check_condition_two(path, player, calculatedMove)) {
+        return *calculatedMove;
+    } else if (check_condition_three(path, callerPlayerId, players, calculatedMove)) {
+        return *calculatedMove;
+    } else if (check_condition_four(path, player, calculatedMove)) {
+        return *calculatedMove;
+    } else if (check_condition_five(path, player, calculatedMove)) {
+        return *calculatedMove;
+    } else {
+        exit(7);
+    }
+}
+
+bool check_condition_one(Path* path, int callerPlayerId, Player** players, 
+        int* calculatedMove) {
+    Player* callingPlayer = players[callerPlayerId];
+    for (int i = 0; i < callingPlayer->playerCount; i++) {
+        if (callerPlayerId == i) {
+            continue;
+        }
+
+        if (callingPlayer->site >= players[i]->site) {
+            return false;
+        }
+    }
+
+    if (is_site_free(path->sites[callingPlayer->site + 1])) {
+        *calculatedMove = callingPlayer->site + 1;
+        return true;
+    }
+
+    return false;
+}
+
+bool check_condition_two(Path* path, Player* player, int* calculatedMove) {
+    if (player->money % 2 == 0) {
+        return false;
+    }
+
+    int nextBarrier = get_next_barrier(path, player->site);
+    for (int siteNum = player->site + 1; siteNum <= nextBarrier; siteNum++) {
+        if (strcmp(path->sites[siteNum]->type, "Mo") == 0) {
+            if (is_site_free(path->sites[siteNum])) {
+                *calculatedMove = siteNum;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool check_condition_three(Path* path, int callerPlayerId, Player** players, 
+        int* calculatedMove) {
+    Player* callingPlayer = players[callerPlayerId];
+
+    *calculatedMove = -1;
+    int nextBarrier = get_next_barrier(path, callingPlayer->site);
+    for (int siteNum = callingPlayer->site + 1; siteNum <= nextBarrier; siteNum++) {
+        if (strcmp(path->sites[siteNum]->type, "Ri") == 0) {
+            if (is_site_free(path->sites[siteNum])) {
+                *calculatedMove = siteNum;
+                break;
+            }
+        }
+    }
+
+    if (*calculatedMove == -1) {
+        return false;
+    }
+
+    for (int i = 0; i < callingPlayer->playerCount; i++) {
+        if (callerPlayerId != i) {
+            continue;
+        }
+
+        if (get_total_cards(callingPlayer) <= get_total_cards(players[i])) {
+            break;
+        }
+        return true;
+    }
+
+    for (int i = 0; i < callingPlayer->playerCount; i++) {
+        if (get_total_cards(players[i]) != 0) {
+            break;
+        }
+        return true;
+    }
+
+    return false;
+}
+
+bool check_condition_four(Path* path, Player* player, int* calculatedMove) {
+    int nextBarrier = get_next_barrier(path, player->site);
+    for (int siteNum = player->site + 1; siteNum <= nextBarrier; siteNum++) {
+        if (strcmp(path->sites[siteNum]->type, "V2") == 0) {
+            if (is_site_free(path->sites[siteNum])) {
+                *calculatedMove = siteNum;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool check_condition_five(Path* path, Player* player, int* calculatedMove) {
+    int nextBarrier = get_next_barrier(path, player->site);
+    for (int siteNum = player->site + 1; siteNum <= nextBarrier; siteNum++) {
+        if (is_site_free(path->sites[siteNum])) {
+            *calculatedMove = siteNum;
+            return true;
+        }
+    }
+
+    return false;
+}
+

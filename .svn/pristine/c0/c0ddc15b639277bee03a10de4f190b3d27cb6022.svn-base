@@ -1,0 +1,48 @@
+#ifndef PLAYER_H
+#define PLAYER_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "messageUtils.h"
+#include "path.h"
+
+#define STARTING_MONEY 7
+#define STARTING_POINTS 0
+#define STARTING_SITE 0
+#define STARTING_VISITS 0
+#define NUM_CARD_TYPES 5
+
+typedef struct Player Player;
+typedef struct Effect Effect;
+
+struct Player {
+    int id;
+    int playerCount;
+    int money;
+    int points;
+    int v1Visits;
+    int v2Visits;
+    int site;
+    int* cardCounts;
+};
+
+struct Effect {
+    int money;
+    int points;
+    int site;
+    int v1Visits;
+    int v2Visits;
+    char card;
+};
+
+Player* create_player(int* playerCount, int* playerId);
+Player** create_players(int* playerCount);
+void update_player(Player* player, Effect* effect);
+void print_player_summary(FILE* to, Player* player);
+
+int calculate_score(Player* player);
+int get_total_cards(Player* player);
+
+#endif
